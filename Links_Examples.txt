@@ -1,0 +1,54 @@
+
+Every example from P2996 ("Reflection for C++26") now compiles with GCC trunk.
+
+
+Back-And-Forth:
+https://lnkd.in/eFvHDxSY
+
+Selecting Members:
+https://lnkd.in/ecCh3Tnm
+https://lnkd.in/eTniMUWW
+https://lnkd.in/eXjprXnd
+
+List of Types to List of Sizes:
+https://lnkd.in/eX7whnKC
+
+Implementing make_integer_sequence:
+https://lnkd.in/eHuAi7gi
+
+Getting Class Layout:
+https://lnkd.in/e4R5Sqpr
+
+Enum to String:
+https://lnkd.in/etCdhQD3
+
+Parsing Command-Line Options:
+https://lnkd.in/eZM2wH2f
+
+A Simple Tuple Type:
+https://lnkd.in/eZDU6ddS
+
+A Simple Variant Type:
+https://lnkd.in/eSFN8QR6
+
+Struct to Struct of Arrays:
+https://lnkd.in/ec7Hg_SU
+
+Parsing Command-Line Options II:
+https://lnkd.in/ez58ugpp
+
+A Universal Formatter:
+https://lnkd.in/e7JUx_Fr
+
+Converting a Struct to Tuple:
+https://lnkd.in/eWyu_9up
+
+Implementing tuple_cat:
+https://lnkd.in/eNNZVWF3
+
+Named tuple:
+https://lnkd.in/eqmWqwyJ
+https://lnkd.in/eRRmaTbt
+
+Compile-Time Ticket Counter
+https://lnkd.in/e2MEKV-7
