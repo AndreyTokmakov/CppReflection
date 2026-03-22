@@ -25,22 +25,15 @@ Description : Coroutines
 #include <string>
 #include <cassert>
 #include <random>
-#include <tuple>
-#include <bit>
 #include <utility>
-#include <condition_variable>
-#include <source_location>
 
 #include <algorithm>
 #include <ranges>
 #include <set>
 #include <map>
 #include <vector>
-#include <deque>
-#include <unordered_set>
 #include <unordered_map>
 
-#include <coroutine>
 #include <meta>
 
 // https://godbolt.org/z/6Prs3fT1b
@@ -68,18 +61,6 @@ Description : Coroutines
 //      [: r :]::        -  produces a nested-name-specifier corresponding to a namespace, enumeration type, or class.
 
 
-template <typename T>
-void splicing_example()
-{
-    constexpr auto vec = ^^std::vector<T>;
-    typename [: vec :] x = {1, 2, 3};
-    for (const auto& elem : x) {
-        std::cout << elem << " ";
-    }
-
-    // Output: 1 2 3
-}
-
 void retrieve_Data_Members_Names()
 {
     // Reflect the type User
@@ -99,71 +80,6 @@ void retrieve_Data_Members_Names()
     //  Member: age
 }
 
-// A simple generic vector with 3 elements of type T
-template <typename T>
-struct MyVec
-{
-    std::array<T, 3> data;
-};
-
-// A simple map-like struct with a key and a value
-template <typename Key, typename Value>
-struct MyMap
-{
-    Key key;
-    Value value;
-};
-
-
-void create_new_type()
-{
-    // Step 1: Reflect the individual types we'll need
-    constexpr std::meta::info key_info     = ^^int;       // Get meta info for 'int'
-    constexpr std::meta::info vec_template = ^^MyVec;     // Get meta info for the template 'MyVec'
-    constexpr std::meta::info value_arg    = ^^double;    // Get meta info for 'double'
-
-    // Step 2: Use reflection to create the type MyVec<double>
-    //         This "fills in" the template MyVec<T> with T = double
-    constexpr std::meta::info vec_info = std::meta::substitute(vec_template, {value_arg});
-
-    // Step 3: Use reflection to create the type MyMap<int, MyVec<double>>
-    //         This creates a reflected instantiation of MyMap with the previous types
-    constexpr std::meta::info map_info = std::meta::substitute(^^MyMap, {key_info, vec_info});
-
-    // Step 4: Splice the reflected type into real C++ code using [: :]
-    //         This gives us a real usable type: MyMap<int, MyVec<double>>
-    typename [:map_info:] obj = {
-        7,                              // obj.key = 7
-        { {1.1, 2.2, 3.3} }             // obj.value = MyVec<double> with 3 doubles
-    };
-
-    // Step 5: Use the object like any normal type
-    std::cout << "Key: " << obj.key << "\nValues:\n";
-    for (double v : obj.value.data)  // Loop through the MyVec's data array
-        std::cout << v << '\n';
-
-    // EDITED ON June 21, 2025 for better clarity
-}
-
-
-int main()
-{
-    reflectTypes_Simple();
-
-    useReflectedData();
-
-    splicing_example<int>();
-
-    retrieve_Data_Members_Names();
-
-    create_new_type();
-}
-
-
-#endif
-
-
-#if 0
 namespace demo1
 {
     // #include <experimental/reflect>
@@ -177,11 +93,20 @@ namespace demo1
 
     using MetaT = reflexpr(Color);
 
-    void test() {
+    void test()
+    {
         constexpr std::string_view name = get_name_v<get_element_t<0, get_enumerators_t<MetaT>>>;
         std::cout << "The name of the first value is \"" << name << "\"" << std::endl;
     }
+
 }
+
+int main()
+{
+    retrieve_Data_Members_Names();
+    demo1::test();
+}
+
 #endif
 
 
@@ -416,7 +341,6 @@ namespace reflection::types
         // Message: Hello Reflection
     }
 
-
     template <typename T>
     void deduce_Type_of_Vector()
     {
@@ -428,6 +352,56 @@ namespace reflection::types
         std::cout << std::endl;
 
         // Output: 1 2 3
+    }
+
+    template <typename T>
+    struct MyVec
+    {
+        std::array<T, 3> data;
+    };
+
+    template <typename Key, typename Value>
+    struct MyMap
+    {
+        Key key;
+        Value value;
+    };
+
+    void Create_New_Type()
+    {
+        // Reflect the individual types we'll need
+        constexpr std::meta::info key_info     = ^^int;       // Get meta info for 'int'
+        constexpr std::meta::info vec_template = ^^MyVec;     // Get meta info for the template 'MyVec'
+        constexpr std::meta::info value_arg    = ^^double;    // Get meta info for 'double'
+
+        // Use reflection to create the type MyVec<double>
+        // This "fills in" the template MyVec<T> with T = double
+        constexpr std::meta::info vec_info = std::meta::substitute(vec_template, {value_arg});
+
+        // Use reflection to create the type MyMap<int, MyVec<double>>
+        // This creates a reflected instantiation of MyMap with the previous types
+        constexpr std::meta::info map_info = std::meta::substitute(^^MyMap, {key_info, vec_info});
+
+        // Splice the reflected type into real C++ code using [: :]
+        // This gives us a real usable type: MyMap<int, MyVec<double>>
+        typename [:map_info:] obj = {
+            7,                              // obj.key = 7
+            { {1.1, 2.2, 3.3} }             // obj.value = MyVec<double> with 3 doubles
+        };
+
+        // Use the object like any normal type
+        std::cout << "Key: " << obj.key << std::endl;
+        std::cout << "Values:\n";
+        for (double v : obj.value.data)  // Loop through the MyVec's data array
+            std::cout << v << '\n';
+
+        /*
+        Key: 7
+        Values:
+        1.1
+        2.2
+        3.3
+        */
     }
 }
 
@@ -673,8 +647,6 @@ namespace reflection::serialization
 }
 
 
-
-
 int main([[maybe_unused]] int argc,
          [[maybe_unused]] char** argv)
 {
@@ -682,11 +654,12 @@ int main([[maybe_unused]] int argc,
 
     using namespace reflection;
 
-    types::basics();
-    types::reflectTypes_Simple();
-    types::useReflectedData();
-    types::deduce_Type_of_Vector<int>();
-    types::deduce_Type_of_Vector<double>();
+    // types::basics();
+    // types::reflectTypes_Simple();
+    // types::useReflectedData();
+    // types::deduce_Type_of_Vector<int>();
+    // types::deduce_Type_of_Vector<double>();
+    types::Create_New_Type();
 
     // get_data_member_0::retrieve_Data_Members_Names();
     // get_data_member_1::demo();
