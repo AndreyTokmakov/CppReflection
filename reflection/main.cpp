@@ -26,6 +26,7 @@ Description : Coroutines
 #include <cassert>
 #include <random>
 #include <utility>
+#include <span>
 
 #include <algorithm>
 #include <ranges>
@@ -294,7 +295,7 @@ namespace reflection::types
 
     void basics()
     {
-        constexpr auto r = ^^int;
+        constexpr std::meta::info r = ^^int;
 
         typename[:r:] i = 42;       // Same as: int x = 42;
         static_assert(std::is_same_v<decltype(i), int>);
@@ -588,6 +589,41 @@ namespace reflection::enums
     }
 }
 
+namespace reflection::enums
+{
+    bool validate_enum()
+    {
+        /*
+        constexpr std::span fields = std::define_static_array(std::meta::enumerators_of(^^Color));
+        for (const auto& field : fields) {
+            std::cout << field << std::endl;
+        }*/
+
+        // constexpr auto vals = std::define_static_array(std::meta::enumerators_of(^^Color));
+        template for(constexpr auto color : std::define_static_array(std::meta::enumerators_of(^^Color)) )
+        {
+            constexpr std::string_view colorName = std::meta::identifier_of(color);
+            std::println("{}", colorName);
+        }
+
+        /*
+        Green
+        Blue
+        Yellow
+        Purple
+        */
+
+        /*
+        return std::ranges::equal(fields, enumerators, [](auto field, auto enumerator) {
+            return identifier_of(field) == identifier_of(enumerator);
+        });*/
+
+        return  true;
+    }
+
+}
+
+
 namespace reflection::checking_type
 {
     class A;
@@ -646,6 +682,124 @@ namespace reflection::serialization
     }
 }
 
+namespace reflection::generating_code
+{
+    // INFO: Metafunctions to generate code:
+    //  - define_aggregate: Takes the reflection of an incomplete class/struct/union type and a list of reflections of data member
+    //                      descriptions and completes the given class type with datab members as described in the given order.
+    //  - data_member_spec: Returns a reflection a data member description for the data-member of a given type.
+
+
+    struct Person;
+
+    consteval {
+        std::meta::define_aggregate(^^Person, {
+            std::meta::data_member_spec(^^std::string, { .name = "name" }),
+            std::meta::data_member_spec(^^int, { .name = "age" }),
+            std::meta::data_member_spec(^^double, { .name = "weight" })
+        });
+    }
+
+    void demo()
+    {
+    }
+}
+
+namespace test_1
+{
+    // INFO: https://godbolt.org/
+
+    template <typename T>
+    consteval auto find_member(std::string_view name)
+    {
+        const std::meta::access_context ctx = std::meta::access_context::current();
+        for (std::meta::info field : std::meta::nonstatic_data_members_of(^^T, ctx)) {
+            if (std::meta::has_identifier(field) && std::meta::identifier_of(field) == name) {
+                return field;
+            }
+        }
+        throw "Variable name in format string not found in local state!";
+    }
+
+    consteval bool is_inside_braces(const std::string_view s, const int idx)
+    {
+        if (s[idx] == '}')
+            return true;
+        for (int j = idx - 1; j >= 0; --j) {
+            if (s[j] == '{')
+                return true;
+            if (s[j] == '}')
+                return false;
+        }
+        return false;
+    }
+
+
+    template <const char* S, typename V>
+    constexpr void fun(V& local_state)
+    {
+        constexpr std::string_view s = S;
+        template for (constexpr int i : std::views::iota(0, (int)s.size()))
+        {
+            if constexpr (s[i] == '{')
+            {
+                constexpr size_t end = s.find('}', i);
+                static_assert(end != std::string_view::npos, "Missing closing '}' in format string!");
+                constexpr std::string_view var_name = s.substr(i + 1, end - i - 1);
+                std::cout << local_state.[:find_member<V>(var_name):];
+            }
+            else if constexpr (!is_inside_braces(s, i)) {
+                std::cout << s[i];
+            }
+        }
+    }
+
+#define fprint(fmt_string) fun<std::define_static_string(fmt_string)>(state);
+
+#if 0
+    void demo()
+    {
+        struct {
+            int health = 100;
+            float shield_level = 50.5f;
+            const char* player_name = "Kratos";
+        } state; // something like std::meta::local_variables would save us
+
+        fprint("Player {player_name} has {health} HP and {shield_level} Shields.\n");
+        fprint("Just testing braces: {health}\n");
+    }
+#endif
+}
+
+
+namespace experiments
+{
+    template <typename T>
+    constexpr std::meta::info info = ^^T;
+
+    template <template <typename...> typename F>
+    consteval std::meta::info fmap(std::same_as<std::meta::info> auto... as) {
+        return std::meta::substitute(^^F, {as...});
+    }
+
+    // join :: meta::info{meta::info{T}} -> meta::info{T}
+    consteval auto join(std::meta::info a) {
+        return std::meta::extract<std::meta::info>(a);
+    }
+
+    template <std::meta::info F>
+    consteval auto bind(std::meta::info a) {
+        return join(std::meta::substitute(F, {a}));
+    }
+
+    void demo()
+    {
+        constexpr auto info_int = info<int>;
+
+
+    }
+}
+
 
 int main([[maybe_unused]] int argc,
          [[maybe_unused]] char** argv)
@@ -659,7 +813,7 @@ int main([[maybe_unused]] int argc,
     // types::useReflectedData();
     // types::deduce_Type_of_Vector<int>();
     // types::deduce_Type_of_Vector<double>();
-    types::Create_New_Type();
+    // types::Create_New_Type();
 
     // get_data_member_0::retrieve_Data_Members_Names();
     // get_data_member_1::demo();
@@ -667,12 +821,15 @@ int main([[maybe_unused]] int argc,
     // enums::printValues_Simple();
     // enums::printValues_Complex();
     // enums::enumerateValues();
+    // enums::validate_enum();
 
     // checking_type::is_complete_type();
 
     // splicers::type_Aliases();
 
     // serialization::simpleType();
+
+    experiments::demo();
    
     return EXIT_SUCCESS;
 }
