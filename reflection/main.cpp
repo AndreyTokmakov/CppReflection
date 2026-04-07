@@ -795,8 +795,20 @@ namespace experiments
     void demo()
     {
         constexpr auto info_int = info<int>;
+    }
 
+    void arrayOfTypes()
+    {
+        constexpr std::array types1  { ^^int, ^^float, ^^double };
+        // constexpr std::array types2 = std::to_array<std::meta::info>( {^^int, ^^float, ^^double });
 
+        constexpr std::array<size_t, types1.size()> sizes = [&] {
+            std::array<size_t, types1.size()> result;
+            std::ranges::transform(types1, result.begin(), std::meta::size_of);
+            return result;
+        }();
+
+        std::println("Sizes: {}", sizes);  // --> Sizes: [4, 4, 8]
     }
 }
 
@@ -829,8 +841,10 @@ int main([[maybe_unused]] int argc,
 
     // serialization::simpleType();
 
-    experiments::demo();
-   
+    // experiments::demo();
+    experiments::arrayOfTypes();
+
+
     return EXIT_SUCCESS;
 }
 
