@@ -342,6 +342,7 @@ namespace reflection::types
         // Message: Hello Reflection
     }
 
+    // INFO: https://blog.infotraining.pl/hashing-in-cpp-26
     void reflectClassMember()
     {
         using namespace std::string_view_literals;
@@ -832,6 +833,40 @@ namespace experiments
     }
 }
 
+namespace access_member_values_by_indexes
+{
+    using namespace std::string_view_literals;
+
+    struct Person
+    {
+        int id;
+        std::string_view name;
+    };
+
+    consteval std::meta::info member_number(const uint8_t n)
+    {
+        if (n == 0)
+            return ^^Person::id;
+        else if (n == 1)
+            return ^^Person::name;
+
+        std::unreachable();
+    }
+
+    void demo()
+    {
+        Person person {42, "John Doe"sv };
+
+        std::println("Person(id: {}, name: {})", person.id, person.name);
+
+        person.[: member_number(0) :] = 665;             // Same as: p.id = 42;
+        person.[: member_number(1) :] = "John Smith"sv;  // Same as: p.name = "John Smith";
+        // p.[: member_number(5) :] = "John Doe"sv;        // Error: member_number(5) is not a constant
+
+        std::println("Person(id: {}, name: {})", person.id, person.name);
+    }
+}
+
 
 int main([[maybe_unused]] int argc,
          [[maybe_unused]] char** argv)
@@ -843,10 +878,12 @@ int main([[maybe_unused]] int argc,
     // types::basics();
     // types::reflectTypes_Simple();
     // types::useReflectedData();
-    types::reflectClassMember();
+    // types::reflectClassMember();
     // types::deduce_Type_of_Vector<int>();
     // types::deduce_Type_of_Vector<double>();
     // types::Create_New_Type();
+
+    access_member_values_by_indexes::demo();
 
     // get_data_member_0::retrieve_Data_Members_Names();
     // get_data_member_1::demo();
@@ -864,6 +901,8 @@ int main([[maybe_unused]] int argc,
 
     // experiments::demo();
     // experiments::arrayOfTypes();
+
+
 
 
 
