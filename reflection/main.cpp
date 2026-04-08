@@ -307,19 +307,19 @@ namespace reflection::types
     void reflectTypes_Simple()
     {
         // Reflect the struct type 'User'
-         [[maybe_unused]]
+        [[maybe_unused]]
         constexpr std::meta::info user_reflection = ^^User;
 
         // Reflect the global variable 'max_connections'
-         [[maybe_unused]]
+        [[maybe_unused]]
         constexpr std::meta::info connections_reflection = ^^max_connections;
 
         // Reflect the free function 'say_hello'
-         [[maybe_unused]]
+        [[maybe_unused]]
         constexpr std::meta::info hello_reflection = ^^say_hello;
 
         // Reflect the data member 'age' inside struct 'User'
-         [[maybe_unused]]
+        [[maybe_unused]]
         constexpr std::meta::info user_age_reflection = ^^User::age;
     }
 
@@ -340,6 +340,26 @@ namespace reflection::types
         // Number: 100
         // Pi: 3.14
         // Message: Hello Reflection
+    }
+
+    void reflectClassMember()
+    {
+        using namespace std::string_view_literals;
+
+        struct Data
+        {
+            int id;
+            std::string_view name;
+        };
+
+        constexpr std::meta::info r_type = ^^Data;
+        constexpr std::meta::info r_id_member = ^^Data::id;
+        constexpr std::meta::info r_name_member = ^^Data::name;
+
+        constexpr Data data { 42, "forty-two"sv };
+
+        static_assert(data.[: r_id_member :] == 42);
+        static_assert(data.[: r_name_member :] == "forty-two"sv);
     }
 
     template <typename T>
@@ -823,6 +843,7 @@ int main([[maybe_unused]] int argc,
     // types::basics();
     // types::reflectTypes_Simple();
     // types::useReflectedData();
+    types::reflectClassMember();
     // types::deduce_Type_of_Vector<int>();
     // types::deduce_Type_of_Vector<double>();
     // types::Create_New_Type();
@@ -842,7 +863,8 @@ int main([[maybe_unused]] int argc,
     // serialization::simpleType();
 
     // experiments::demo();
-    experiments::arrayOfTypes();
+    // experiments::arrayOfTypes();
+
 
 
     return EXIT_SUCCESS;
